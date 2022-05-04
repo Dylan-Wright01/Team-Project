@@ -1,0 +1,53 @@
+import win32com.client
+import re
+import os
+from datetime import datetime, timedelta
+
+outlook = win32com.client.Dispatch('outlook.application')
+mapi = outlook.GetNameSpace("Mapi")
+inbox = mapi.GetDefaultFolder(6)
+xrlabsFolder = mapi.GetDefaultFolder(6).Folders["xrlabs"]
+
+Junk = mapi.GetDefaultFolder(23)
+messages = inbox.Items
+while True:
+    for message in messages:
+        if message.SenderEmailAddress == 'xrlab@derby.ac.uk':
+
+            dates = re.findall(r'(\d+/\d+/\d+)', message.Body)
+            times = re.findall(r"(?i)(\d?\d:\d\d)", message.Body)
+            referncenumber = re.findall(r'\bRef+', message.Body)
+
+            startdate = dates[0]
+            enddate = dates[1]
+            starttime = times[1]
+            endtime = times[2]
+            FMT = '%H:%M'
+            tdelta = datetime.strptime(endtime, FMT) - datetime.strptime(starttime, FMT)
+            time = str(tdelta)
+            print(tdelta)
+            h,m,s = time.split(':')
+            duraction = int(h) * 60 + int(m)
+            print(duraction)
+            print(startdate)
+            print(starttime)
+            print(endtime)
+            print(enddate)
+            print(referncenumber[0])
+            d,m,y = startdate.split("/")
+            outlookdate = "/".join((y,m,d))
+            print(outlookdate)
+            outlookstartd = outlookdate + " " + starttime
+            outlookstart = str(outlookstartd)
+            print(outlookstart)
+            start = startdate + starttime
+
+            appt = outlook.CreateItem(1)
+            appt.Start = outlookstart
+            appt.subject = "xrlab booking"
+            appt.Duration = duraction
+            appt.Location = "Derby Universcity"
+            appt.Save()
+            appt.Send()
+
+            message.Move(xrlabsFolder)
