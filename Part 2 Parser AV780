@@ -1,0 +1,20 @@
+import win32com.client
+
+outlook = win32com.client.Dispatch("outlook.application").GetNamespace("MAPI")
+inbox = outlook.GetDefaultFolder(6)
+messages = inbox.Items
+messages.Restrict("[SenderEmailAddress] = 'EMAIL ADDRESS OF SENDER'") #Change this to make sure that we use appropriate email
+messages.Restrict("[Subject] = 'XR Lab Booking'") #Change based on what subjects we accept for part 2 
+
+for x in messages:
+    message_body = x.Body
+    mylist = message_body.split('\r\n')
+    for key_values in mylist[3:7]:
+        BookedRoom = mylist[4]
+        BookedTime = mylist[5]
+        BookingRef = mylist[6]
+
+    head, sep, BookingRef = BookingRef.partition('is ')
+    head, sep, BookedRoom = BookedRoom.partition('the ')
+    BookingStartTime, sep, BookingEndTime = BookedTime.partition('until ')
+    print("\n",BookingRef, "\n", BookedRoom, "\n", BookingStartTime, "\n", BookingEndTime)
