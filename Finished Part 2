@@ -1,0 +1,278 @@
+from selenium import webdriver
+from time import sleep
+import win32com.client
+import re
+import win32com.client as win32
+from selenium.webdriver.chrome.webdriver import WebDriver
+
+while True:
+    try:
+        # this part is for accessing Outlook
+        outlook = win32com.client.Dispatch('outlook.application').GetNameSpace("MAPI")
+        inbox = outlook.GetDefaultFolder(6)
+        messages = inbox.Items
+        messages = messages.Restrict("[SenderName] = 'Sohan Hossain'")  # sender Email name
+        # massages = massages.Restrict("[SenderEmailAddress] = ''")  # sender email address (put your own email address here)
+        # messages = massages.Restrict("[Subject] = ''")  # you can put your own subject line
+        xrlabsfolder = outlook.GetDefaultFolder(6).Folders["xrlabs"]
+        message = messages.GetFirst()
+
+        for message in list(messages):
+            # for Reading Email
+            if message.Unread:
+                body = message.Body
+                print(body)
+                date = re.findall(r'(?i)(\d+/\d+/\d+)', body)
+                b_date = date[0]
+                print(b_date)
+                times = re.findall(r"(?i)(\d?\d:\d\d)", body)
+                b_start_time = times[0]
+                b_end_time = times[1]
+                mylist = body.split()
+                b_reason = mylist[9] + " " + mylist[10]
+                print(b_start_time)
+                print(b_end_time)
+                print(b_reason)
+                message.Move(xrlabsfolder)
+
+                c_1 = 0
+                c_2 = 0
+                c_3 = 0
+                c_4 = 0
+                c_5 = 0
+                c = 0
+
+
+                # for delete booking and sending email to the user
+                def delete_booking():
+                    olApp = win32.Dispatch('Outlook.Application')
+
+                    olNS = olApp.GetNameSpace('MAPI')
+
+                    mailItem = olApp.CreateItem(0)
+                    mailItem.Subject = 'XR Lab booking is not possible at this moment'
+                    mailItem.BodyFormat = 1
+                    mailItem.Body = "Hello There, \nThe specific date and time you are trying to book the XR lab is not gone through because the lab is already been booked."
+                    mailItem.To = '100537490@unimail.derby.ac.uk'  # the user mail
+
+                    mailItem.Display()
+                    mailItem.Save()
+                    mailItem.Send()
+
+                    c = c_1 + c_2 + c_3 + c_4 + c_5
+
+                    driver.find_element_by_id("ctl00_ctl00_header1_myAccountLink").click()
+
+                    for j in range(c - 1):
+                        driver.find_element_by_id("1_myAccountLink").click()
+                        sleep(2)
+                        driver.find_element_by_class_name("icon-before").click()
+                        driver.find_element_by_id("ctl00_SideContent_tasks_delete").click()
+                        alert = driver.switch_to.alert
+                        alert.accept()
+                        driver.find_element_by_id("1_myAccountLink").click()
+
+                    driver.quit()
+
+
+                # this part work for opening the browser and log into the Connect2
+                path = "C:\Program Files (x86)\chromedriver.exe"
+                driver = webdriver.Chrome(path)
+                username = "Team Project G6"
+                password = "TPG6local"
+
+                driver.get("https://derbyuniarts.getconnect2.com/SignIn.aspx")
+
+                driver.find_element_by_id("ctl00_MainContent_signin_showLocalLk").click()
+                driver.find_element_by_id("ctl00_MainContent_signin_usernameField").send_keys(username)
+                driver.find_element_by_id("ctl00_MainContent_signin_passwordField").send_keys(password)
+                driver.find_element_by_id("ctl00_MainContent_signin_signinButton").click()
+                sleep(1)
+                driver.find_element_by_id("1_createBookingSingle").click()
+                print("Login Successfully")
+
+                """This loop book Cintiq Work Station 4 time"""
+                for i in range(4):
+
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_resourceList_resourceRpt_ctl01_bookBtn").click()
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startDate_textbox").send_keys(
+                        b_date)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startTime_textbox").send_keys(
+                        b_start_time)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_endTime_textbox").send_keys(
+                        b_end_time)
+
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_btnUpdate").click()
+                    sleep(.5)
+                    btn_1 = driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext")
+                    c_1 += 1
+                    if btn_1.is_enabled():
+                        btn_1.click()
+                    else:
+                        delete_booking()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_form_property3311_textbox").send_keys(
+                        b_reason)
+                    sleep(1)
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_MainContent_MainWizardContent_requiredBfl_checkbox").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnSubmit").click()
+                    driver.find_element_by_id("ctl00_ctl00_menu_createBookingSingle").click()
+
+                sleep(2)
+
+                """This loop book Streaming Work Station access 2 time"""
+                for i in range(2):
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_resourceList_resourceRpt_ctl02_bookBtn").click()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startDate_textbox").send_keys(
+                        b_date)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startTime_textbox").send_keys(
+                        b_start_time)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_endTime_textbox").send_keys(
+                        b_end_time)
+
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_btnUpdate").click()
+                    sleep(.5)
+                    btn_2 = driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext")
+                    c_2 += 1
+                    if btn_2.is_enabled():
+                        btn_2.click()
+                    else:
+                        delete_booking()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_form_property3311_textbox").send_keys(
+                        b_reason)
+                    sleep(1)
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_MainContent_MainWizardContent_requiredBfl_checkbox").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnSubmit").click()
+                    driver.find_element_by_id("ctl00_ctl00_menu_createBookingSingle").click()
+
+                sleep(2)
+
+                """This loop book VR Pod (Blue) 1 time """
+                for i in range(1):
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_resourceList_resourceRpt_ctl03_bookBtn").click()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startDate_textbox").send_keys(
+                        b_date)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startTime_textbox").send_keys(
+                        b_start_time)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_endTime_textbox").send_keys(
+                        b_end_time)
+
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_btnUpdate").click()
+                    sleep(.5)
+                    btn_3 = driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext")
+                    c_3 += 1
+                    if btn_3.is_enabled():
+                        btn_3.click()
+                    else:
+                        delete_booking()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_form_property3311_textbox").send_keys(
+                        b_reason)
+                    sleep(1)
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_MainContent_MainWizardContent_requiredBfl_checkbox").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnSubmit").click()
+                    driver.find_element_by_id("ctl00_ctl00_menu_createBookingSingle").click()
+
+                sleep(2)
+
+                """This loop book VR Pod (Grey) 1 time """
+                for i in range(1):
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_resourceList_resourceRpt_ctl04_bookBtn").click()
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startDate_textbox").send_keys(
+                        b_date)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startTime_textbox").send_keys(
+                        b_start_time)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_endTime_textbox").send_keys(
+                        b_end_time)
+
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_btnUpdate").click()
+                    sleep(.5)
+                    btn_4 = driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext")
+                    c_4 += 1
+                    if btn_4.is_enabled():
+                        btn_4.click()
+                    else:
+                        delete_booking()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_form_property3311_textbox").send_keys(
+                        b_reason)
+                    sleep(1)
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_MainContent_MainWizardContent_requiredBfl_checkbox").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnSubmit").click()
+                    driver.find_element_by_id("ctl00_ctl00_menu_createBookingSingle").click()
+
+                sleep(2)
+
+                """This loop book Work Station access 2 time """
+                for i in range(2):
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_resourceList_resourceRpt_ctl05_bookBtn").click()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startDate_textbox").send_keys(
+                        b_date)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_startTime_textbox").send_keys(
+                        b_start_time)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_datetime_endTime_textbox").send_keys(
+                        b_end_time)
+
+                    sleep(1)
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_SideContent_StepWizardContent_editResourceBookingsTime_btnUpdate").click()
+                    sleep(.5)
+                    btn_5 = driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext")
+                    c_5 += 1
+                    if btn_5.is_enabled():
+                        btn_5.click()
+                    else:
+                        delete_booking()
+                    driver.find_element_by_id(
+                        "ctl00_ctl00_MainContent_MainWizardContent_form_property3311_textbox").send_keys(
+                        b_reason)
+                    sleep(1)
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_MainContent_MainWizardContent_requiredBfl_checkbox").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnNext").click()
+                    driver.find_element_by_id("ctl00_ctl00_BannerContent_wizardBannerRight_btnSubmit").click()
+                    driver.find_element_by_id("ctl00_ctl00_menu_createBookingSingle").click()
+
+                driver.quit()
+
+    except:
+        print("An Error Occured")
